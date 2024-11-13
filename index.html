@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet Sentinel-2 Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map { 
+            height: calc(100vh - 50px);
+            margin-top: 50px;
+        }
+        body { margin: 0; }
+        .controls {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: white;
+            padding: 10px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        select {
+            padding: 5px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <label>Layer: 
+            <select id="layerSelect">
+                <option value="1_TRUE_COLOR">True Color</option>
+                <option value="2_FALSE_COLOR">False Color</option>
+                <option value="3_NDVI">NDVI</option>
+                <!-- <option value="4_MOISTURE_INDEX">Moisture Index</option>
+                <option value="5_FALSECOLOR-URBAN">False Color (Urban)</option>
+                <option value="6_SWIR">SWIR</option>
+                <option value="7_AGRICULTURE">Agriculture</option>
+                <option value="8_GEOLOGY">Geology</option>
+                <option value="9_BATHYMETRIC">Bathymetric</option>
+                <option value="10_SNOW">Snow</option> -->
+            </select>
+        </label>
+        <label>Start Date: <input type="date" id="startDate"></label>
+        <label>End Date: <input type="date" id="endDate"></label>
+        <button onclick="updateMap()">Update Map</button>
+    </div>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialize the map
+        var map = L.map('map').setView([10.8231, 106.6297], 10);
+        var sentinelLayer;
+
+        // Add OpenStreetMap base layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Set default dates
+        const today = new Date();
+        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+        document.getElementById('startDate').value = lastMonth.toISOString().split('T')[0];
+        document.getElementById('endDate').value = today.toISOString().split('T')[0];
+
+        function updateMap() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const selectedLayer = document.getElementById('layerSelect').value;
+
+            // Remove existing sentinel layer if it exists
+            if (sentinelLayer) {
+                map.removeLayer(sentinelLayer);
+            }
+
+            // Sentinel Hub WMS Layer
+            var wmsUrl = 'https://services.sentinel-hub.com/ogc/wms/26069154-1b1f-493a-9ea7-fde85e6e5b04';
+            var wmsParams = {
+                layers: selectedLayer,
+                format: 'image/png',
+                transparent: true,
+                version: '1.3.0',
+                maxcc: 20,
+                time: `${startDate}/${endDate}`,
+                attribution: 'Sentinel-2 Imagery © Sentinel Hub'
+            };
+
+            // Add new Sentinel layer with error handling
+            sentinelLayer = L.tileLayer.wms(wmsUrl, wmsParams)
+                .on('tileerror', function(error) {
+                    console.error('WMS tile loading error:', error);
+                })
+                .addTo(map);
+        }
+
+        // Initial map load
+        updateMap();
+
+        // Add scale control
+        L.control.scale().addTo(map);
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet Sentinel-2 Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map { height: 100vh; }
+        body { margin: 0; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialize the map
+        var map = L.map('map').setView([10.8231, 106.6297], 10);
+
+        // Add OpenStreetMap base layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Sentinel Hub WMS Layer
+        var wmsUrl = 'https://services.sentinel-hub.com/ogc/wms/26069154-1b1f-493a-9ea7-fde85e6e5b04';
+        var wmsParams = {
+            layers: '3_NDVI',
+            format: 'image/png',
+            transparent: true,
+            version: '1.3.0',
+            maxcc: 20,
+            time: '2024-01-01/2024-01-31',
+            attribution: 'Sentinel-2 Imagery © Sentinel Hub'
+        };
+
+        // Add Sentinel layer with error handling
+        var sentinelLayer = L.tileLayer.wms(wmsUrl, wmsParams)
+            .on('tileerror', function(error) {
+                console.error('WMS tile loading error:', error);
+            })
+            .addTo(map);
+
+        // Add scale control
+        L.control.scale().addTo(map);
+    </script>
+</body>
+</html> -->
